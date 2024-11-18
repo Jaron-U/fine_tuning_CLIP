@@ -1,0 +1,3 @@
+DATASET:
+  ROOT: "/home/jianglongyu/mydrive/clip_dataset"
+  NAME: "MyDataset"
