@@ -68,6 +68,7 @@ def extend_cfg(cfg):
     """
     from yacs.config import CfgNode as CN
     cfg.TRAINER.CLIP_ADAPTER = CN()
+    cfg.THRESHOLDS = []
     cfg.DATASET.SUBSAMPLE_CLASSES = "all"
 
 

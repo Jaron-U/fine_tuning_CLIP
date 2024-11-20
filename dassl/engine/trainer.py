@@ -389,7 +389,7 @@ class SimpleTrainer(TrainerBase):
         directory = self.cfg.OUTPUT_DIR
         if self.cfg.RESUME:
             directory = self.cfg.RESUME
-        self.start_epoch = self.resume_model_if_exist(directory)
+            self.start_epoch = self.resume_model_if_exist(directory)
 
         # Initialize summary writer
         writer_dir = osp.join(self.output_dir, "tensorboard")

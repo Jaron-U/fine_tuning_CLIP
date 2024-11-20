@@ -31,14 +31,14 @@ CUSTOM_TEMPLATES = {
     'ImageNetV2': 'a photo of a {}.',
     'ImageNetA': 'a photo of a {}.',
     'ImageNetR': 'a photo of a {}.',
-    'MyDataset': 'a photo of a {}.'
+    'MyDataset': 'a photo of {}.'
 }
 
 
 def load_clip_to_cpu(cfg):
     backbone_name = cfg.MODEL.BACKBONE.NAME
     url = clip._MODELS[backbone_name]
-    clip_root = "/home/jianglongyu/Documents/mllm/Dassl.pytorch/clip_weights"
+    clip_root = "/home/jianglongyu/Documents/mllm/fine_tuning_CLIP/clip_weights"
     model_path = clip._download(url, clip_root)
     
     try:
