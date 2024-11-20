@@ -1,4 +1,4 @@
-# Fine Tuning CLIP (Not Finished Yet)
+# Fine Tuning CLIP
 ## Introduction
 This repository contains the code for fine-tuning OpenAI's CLIP model on custom datasets.  
 Using [CLIP-adapted](https://github.com/gaopengcuhk/CLIP-Adapter) and [Dassl.pytorch](https://github.com/KaiyangZhou/Dassl.pytorch) as the base, this repository provides a simple and easy-to-use interface for fine-tuning CLIP on custom datasets.
@@ -45,5 +45,8 @@ chmod +x ./scripts/run.sh
 ```
 
 ### Evaluation
-I am still working on the evaluation part, so it is not available yet...😇
+Calculate the precision and recall of the model on the test set in the `./dassl/evalution/evaluator.py`.
+Save the precision, recall, and f1 value into a csv file.
 
+## Result
+...
