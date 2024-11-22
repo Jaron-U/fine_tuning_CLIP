@@ -7,6 +7,13 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
+import wandb
+
+wandb.init(
+    project="ft_clip",
+    name="clip_adapter_32b", 
+    config={"parameter": "value"}
+)
 
 from dassl.data import DataManager
 from dassl.optim import build_optimizer, build_lr_scheduler
@@ -225,6 +232,7 @@ class TrainerBase:
     def init_writer(self, log_dir):
         if self.__dict__.get("_writer") is None or self._writer is None:
             print(f"Initialize tensorboard (log_dir={log_dir})")
+            wandb.tensorboard.patch(root_logdir=log_dir)
             self._writer = SummaryWriter(log_dir=log_dir)
 
     def close_writer(self):

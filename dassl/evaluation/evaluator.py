@@ -37,9 +37,21 @@ class Classification(EvaluatorBase):
         self._per_class_res = None
         self._y_true = []
         self._y_pred = []
-        self.thresholds = cfg.THRESHOLDS
+        # self.thresholds = cfg.THRESHOLDS
+        self.thresholds = [
+            [26.5, 27.1, 27.2, 27.3, 27.4],
+            [23.3, 23.4, 23.6, 23.7, 23.8],
+            [27.8, 27.9, 28.1, 28.2, 28.3],
+            [26.8, 26.9, 27.1, 27.2, 27.3],
+            [28.3, 28.4, 28.6, 28.7, 28.8]
+        ]
         self.results = {
             label: {"TP": 0, "FP": 0, "FN": 0, "TN": 0} for label in range(self.label_length)
+        }
+        self._results_by_threshold = {
+            label: [
+                {"TP": 0, "FP": 0, "FN": 0, "TN": 0} for _ in range(len(self.thresholds[label]))
+            ] for label in range(self.label_length)
         }
         if cfg.TEST.PER_CLASS_RESULT:
             assert lab2cname is not None
@@ -53,6 +65,11 @@ class Classification(EvaluatorBase):
         self.results = {
             label: {"TP": 0, "FP": 0, "FN": 0, "TN": 0} for label in range(self.label_length)
         }
+        self._results_by_threshold = {
+            label: [
+                {"TP": 0, "FP": 0, "FN": 0, "TN": 0} for _ in range(len(self.thresholds[label]))
+            ] for label in range(self.label_length)
+        }
         if self._per_class_res is not None:
             self._per_class_res = defaultdict(list)
 
@@ -64,154 +81,90 @@ class Classification(EvaluatorBase):
 
         for i in range(len(mo)):
             true_label = gt[i]
-            satified_labels = [
-                label 
-                for label in range(self.label_length) 
-                if mo[i, label] > self.thresholds[label]
-            ]
-
-            if not satified_labels:
-                satified_labels = [self.label_length]
-            
-            self._y_true.append(true_label)
-            self._y_pred.append(satified_labels)
-
             for label in range(self.label_length):
-                if true_label == label:
-                    if label in satified_labels:
-                        self.results[label]["TP"] += 1
-                    else:
-                        self.results[label]["FN"] += 1
-                else:
-                    if label in satified_labels:
-                        self.results[label]["FP"] += 1
-                    else:
-                        self.results[label]["TN"] += 1
+                for t_idx, threshold in enumerate(self.thresholds[label]):
+                    satisfied = mo[i, label] > threshold
 
-        # pred = mo.max(1)[1]
-        # matches = pred.eq(gt).float()
-        # self._correct += int(matches.sum().item())
-        # self._total += gt.shape[0]
-
-        # self._y_true.extend(gt.data.cpu().numpy().tolist())
-        # self._y_pred.extend(pred.data.cpu().numpy().tolist())
-
-        # if self._per_class_res is not None:
-        #     for i, label in enumerate(gt):
-        #         label = label.item()
-        #         matches_i = int(matches[i].item())
-        #         self._per_class_res[label].append(matches_i)
+                    if true_label == label:
+                        if satisfied:
+                            self._results_by_threshold[label][t_idx]["TP"] += 1
+                        else:
+                            self._results_by_threshold[label][t_idx]["FN"] += 1
+                    else:  # Incorrect class
+                        if satisfied:
+                            self._results_by_threshold[label][t_idx]["FP"] += 1
+                        else:
+                            self._results_by_threshold[label][t_idx]["TN"] += 1 
 
     def evaluate(self):
         results = OrderedDict()
-        precision_list = []
-        recall_list = []
-        f1_list = []
+        all_thresholds_results = []
+        best_thresholds = [{"F1": 0, "Threshold": 0, "Precision": 0, "Recall": 0} for _ in range(self.label_length)]
 
-        for label in range(self.label_length):
-            TP = self.results[label]["TP"]
-            FP = self.results[label]["FP"]
-            FN = self.results[label]["FN"]
-            TN = self.results[label]["TN"]
+        for label in range(self.label_length): 
+            for t_idx in range(len(self.thresholds[label])): 
+                TP = self._results_by_threshold[label][t_idx]["TP"]
+                FP = self._results_by_threshold[label][t_idx]["FP"]
+                FN = self._results_by_threshold[label][t_idx]["FN"]
+                TN = self._results_by_threshold[label][t_idx]["TN"]
 
-            precision = TP / (TP + FP) if (TP + FP) > 0 else 0.0
-            recall = TP / (TP + FN) if (TP + FN) > 0 else 0.0
+                precision = round(TP / (TP + FP), 3) if (TP + FP) > 0 else 0.0
+                recall = round(TP / (TP + FN), 3) if (TP + FN) > 0 else 0.0
+                f1 = round(2 * precision * recall / (precision + recall), 3) if (precision + recall) > 0 else 0.0
 
-            f1 = (2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0)
+                all_thresholds_results.append({
+                    "Class": self._lab2cname[label],
+                    "Threshold": self.thresholds[label][t_idx],
+                    "TP": TP,
+                    "TN": TN,
+                    "FP": FP,
+                    "FN": FN,
+                    "Precision": precision,
+                    "Recall": recall,
+                    "F1_Score": f1
+                })
 
-            precision_list.append(precision)
-            recall_list.append(recall)
-            f1_list.append(f1)
+                if f1 > best_thresholds[label]["F1"]:
+                    best_thresholds[label] = {
+                        "F1": f1,
+                        "Threshold": self.thresholds[label][t_idx],
+                        "Precision": precision,
+                        "Recall": recall
+                    }
 
-            class_name = self._lab2cname[label]
-            print(
-                f"Class: {class_name} | TP: {TP} | FP: {FP} | FN: {FN} | TN: {TN} | "
-                f"Precision: {precision:.3f} | Recall: {recall:.3f} | F1: {f1:.3f}"
-            )
+        best_thresholds_results = [
+            {
+                "Label": self._lab2cname[label],
+                "Threshold": best_thresholds[label]["Threshold"],
+                "Precision": best_thresholds[label]["Precision"],
+                "Recall": best_thresholds[label]["Recall"],
+                "F1": best_thresholds[label]["F1"]
+            }
+            for label in range(self.label_length)
+        ]   
+
+        all_results_df = pd.DataFrame(all_thresholds_results)
+        all_results_csv_path = osp.join(self.cfg.OUTPUT_DIR, "all_evaluate_ft_clip_metrics.csv")
+        all_results_df.to_csv(all_results_csv_path, index=False)
+
+        best_thresholds_df = pd.DataFrame(best_thresholds_results)
+        best_thresholds_csv_path = osp.join(self.cfg.OUTPUT_DIR, "best_evaluate_ft_clip_metrics.csv")
+
+        average_precision = best_thresholds_df["Precision"].mean()
+        average_f1 = best_thresholds_df["F1"].mean()
+        average_recall = best_thresholds_df["Recall"].mean()
         
-        df = pd.DataFrame.from_dict(self.results, orient="index")
-        df["Precision"] = precision_list
-        df["Recall"] = recall_list
-        df["F1"] = f1_list
-        df["Average_Precision"] = df["Precision"].mean()
-        df["Average_Recall"] = df["Recall"].mean()
-        df["Average_F1"] = df["F1"].mean()
+        best_thresholds_df["average_precision"] = average_precision
+        best_thresholds_df["average_recall"] = average_recall
+        best_thresholds_df["average_f1"] = average_f1
+        best_thresholds_df.to_csv(best_thresholds_csv_path, index=False)
 
-        csv_path = osp.join(self.cfg.OUTPUT_DIR, "evaluate_ft_clip_metrics.csv")
-        df.to_csv(csv_path, index=False)
+        results["average_precision"] = average_precision
+        results["average_recall"] = average_recall
+        results["average_f1"] = average_f1
 
-        overall_precision, overall_recall, overall_f1, _ = precision_recall_fscore_support(
-            self._y_true,
-            [pred[0] if isinstance(pred, list) else pred for pred in self._y_pred],
-            average="macro",
-            labels=range(5),
-        )
-
-        results["overall_precision"] = overall_precision * 100
-        results["overall_recall"] = overall_recall * 100
-        results["overall_f1"] = overall_f1 * 100
         print(
-            f"Overall | Precision: {overall_precision:.3f} | Recall: {overall_recall:.3f} | F1: {overall_f1:.3f}"
+            f"Average | Precision: {average_precision:.3f} | Recall: {average_recall:.3f} | F1: {average_f1:.3f}"
         )
 
         return results
-
-
-        # results = OrderedDict()
-        # acc = 100.0 * self._correct / self._total
-        # err = 100.0 - acc
-        # macro_f1 = 100.0 * f1_score(
-        #     self._y_true,
-        #     self._y_pred,
-        #     average="macro",
-        #     labels=np.unique(self._y_true)
-        # )
-
-        # # The first value will be returned by trainer.test()
-        # results["accuracy"] = acc
-        # results["error_rate"] = err
-        # results["macro_f1"] = macro_f1
-
-        # print(
-        #     "=> result\n"
-        #     f"* total: {self._total:,}\n"
-        #     f"* correct: {self._correct:,}\n"
-        #     f"* accuracy: {acc:.1f}%\n"
-        #     f"* error: {err:.1f}%\n"
-        #     f"* macro_f1: {macro_f1:.1f}%"
-        # )
-
-        # if self._per_class_res is not None:
-        #     labels = list(self._per_class_res.keys())
-        #     labels.sort()
-
-        #     print("=> per-class result")
-        #     accs = []
-
-        #     for label in labels:
-        #         classname = self._lab2cname[label]
-        #         res = self._per_class_res[label]
-        #         correct = sum(res)
-        #         total = len(res)
-        #         acc = 100.0 * correct / total
-        #         accs.append(acc)
-        #         print(
-        #             f"* class: {label} ({classname})\t"
-        #             f"total: {total:,}\t"
-        #             f"correct: {correct:,}\t"
-        #             f"acc: {acc:.1f}%"
-        #         )
-        #     mean_acc = np.mean(accs)
-        #     print(f"* average: {mean_acc:.1f}%")
-
-        #     results["perclass_accuracy"] = mean_acc
-
-        # if self.cfg.TEST.COMPUTE_CMAT:
-        #     cmat = confusion_matrix(
-        #         self._y_true, self._y_pred, normalize="true"
-        #     )
-        #     save_path = osp.join(self.cfg.OUTPUT_DIR, "cmat.pt")
-        #     torch.save(cmat, save_path)
-        #     print(f"Confusion matrix is saved to {save_path}")
-
-        # return results

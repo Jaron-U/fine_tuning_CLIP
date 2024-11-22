@@ -187,6 +187,7 @@ def build_sampler(
     n_ins=16
 ):
     if sampler_type == "RandomSampler":
+        print("-----------------------------True")
         return RandomSampler(data_source)
 
     elif sampler_type == "SequentialSampler":
