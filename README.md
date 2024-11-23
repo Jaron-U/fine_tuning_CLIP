@@ -1,7 +1,8 @@
 # Fine Tuning CLIP
 ## Introduction
 This repository contains the code for fine-tuning OpenAI's CLIP model on custom datasets.  
-Using [CLIP-adapted](https://github.com/gaopengcuhk/CLIP-Adapter) and [Dassl.pytorch](https://github.com/KaiyangZhou/Dassl.pytorch) as the base, this repository provides a simple and easy-to-use interface for fine-tuning CLIP on custom datasets.
+Using [CLIP-adapted](https://github.com/gaopengcuhk/CLIP-Adapter) and [Dassl.pytorch](https://github.com/KaiyangZhou/Dassl.pytorch) as the base, this repository provides a simple and easy-to-use interface for fine-tuning CLIP on custom datasets.  
+Update: added the [MaPLe](https://github.com/muzairkhattak/multimodal-prompt-learning/tree/main) method to fine-tune the CLIP model.
 
 ## Dataset
 The dataset include 5 classes of images: `doughnut`, `glass cup`, `lemon`, `chinese noodle`, `chinese flute`. which can be found in [my hunggingface](https://huggingface.co/datasets/JaronU/CLIP_train_dataset)
