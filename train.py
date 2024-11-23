@@ -5,6 +5,7 @@ from dassl.utils import setup_logger, set_random_seed, collect_env_info
 from dassl.config import clean_cfg, get_cfg_default
 from dassl.engine import build_trainer
 import trainers.clip_adapter
+import trainers.maple
 import dassl.data.datasets.my_dataset
 
 
@@ -67,9 +68,18 @@ def extend_cfg(cfg):
         cfg.TRAINER.MY_MODEL.PARAM_C = False
     """
     from yacs.config import CfgNode as CN
+    # clip adapter
     cfg.TRAINER.CLIP_ADAPTER = CN()
     cfg.THRESHOLDS = []
     cfg.DATASET.SUBSAMPLE_CLASSES = "all"
+
+    # maple
+    cfg.TRAINER.MAPLE = CN()
+    cfg.TRAINER.MAPLE.N_CTX = 2  # number of context vectors
+    cfg.TRAINER.MAPLE.CTX_INIT = "a photo of a"  # initialization words
+    cfg.TRAINER.MAPLE.PREC = "fp16"  # fp16, fp32, amp
+    cfg.TRAINER.MAPLE.PROMPT_DEPTH = 9 # Max 12, minimum 0, for 1 it will act as shallow MaPLe (J=1)
+    cfg.DATASET.SUBSAMPLE_CLASSES = "all"  # all, base or new
 
 
 def setup_cfg(args):

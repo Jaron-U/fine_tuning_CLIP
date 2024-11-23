@@ -9,12 +9,6 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 import wandb
 
-wandb.init(
-    project="ft_clip",
-    name="clip_adapter_32b", 
-    config={"parameter": "value"}
-)
-
 from dassl.data import DataManager
 from dassl.optim import build_optimizer, build_lr_scheduler
 from dassl.utils import (
@@ -394,6 +388,11 @@ class SimpleTrainer(TrainerBase):
         super().train(self.start_epoch, self.max_epoch)
 
     def before_train(self):
+        wandb.init(
+            project="ft_clip",
+            name=f"{self.cfg.TRAINER.NAME}", 
+            config={"parameter": "value"}
+        )
         directory = self.cfg.OUTPUT_DIR
         if self.cfg.RESUME:
             directory = self.cfg.RESUME

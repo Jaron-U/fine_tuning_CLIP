@@ -11,7 +11,7 @@ DATASET=my_dataset
 SEED=42
 
 CFG=vit_b32
-SHOTS=50
+SHOTS=500
 
 DIR=output/shots_${SHOTS}/${TRAINER}/${CFG}/seed${SEED}_1
 python train.py \

@@ -1,0 +1,54 @@
+DATALOADER:
+  TRAIN_X:
+    BATCH_SIZE: 4
+  TEST:
+    BATCH_SIZE: 100
+  NUM_WORKERS: 8
+
+INPUT:
+  SIZE: (224, 224)
+  INTERPOLATION: "bicubic"
+  PIXEL_MEAN: [0.48145466, 0.4578275, 0.40821073]
+  PIXEL_STD: [0.26862954, 0.26130258, 0.27577711]
+  TRANSFORMS: ["random_resized_crop", "random_flip", "normalize"]
+
+OPTIM:
+  NAME: "sgd"
+  LR: 0.0035
+  MAX_EPOCH: 5
+  LR_SCHEDULER: "cosine"
+  WARMUP_EPOCH: 1
+  WARMUP_TYPE: "constant"
+  WARMUP_CONS_LR: 1e-5
+
+TRAIN:
+  PRINT_FREQ: 20
+
+MODEL:
+  BACKBONE:
+    NAME: "ViT-B/32"
+
+TRAINER:
+  MAPLE:
+    N_CTX: 2
+    CTX_INIT: "a photo of"
+    PREC: "fp16"
+    PROMPT_DEPTH: 9
+
+# shot 50
+# THRESHOLDS: [
+#             [26.11, 26.158, 26.15, 26.22, 26.23],
+#             [22.755, 22.75, 22.79, 22.85, 22.78],
+#             [27, 27.2, 27.1, 27.15, 27.19],
+#             [25.4, 25.45, 25.5, 25.6, 25.65],
+#             [28.055, 28, 28.05, 28.1, 27.9]
+#           ]
+
+# shot 500
+THRESHOLDS: [
+            [27.29, 27.3, 27.35, 27.4, 27.5],
+            [23.8, 23.85, 23.9, 23.95, 24],
+            [28.05, 28.08, 28.1, 28.15, 28.18],
+            [23.05, 23.1, 23.15, 23.2, 23.25],
+            [28.7, 28.75, 29.15, 29.2, 29.25]
+          ]

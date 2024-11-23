@@ -37,14 +37,7 @@ class Classification(EvaluatorBase):
         self._per_class_res = None
         self._y_true = []
         self._y_pred = []
-        # self.thresholds = cfg.THRESHOLDS
-        self.thresholds = [
-            [26.5, 27.1, 27.2, 27.3, 27.4],
-            [23.3, 23.4, 23.6, 23.7, 23.8],
-            [27.8, 27.9, 28.1, 28.2, 28.3],
-            [26.8, 26.9, 27.1, 27.2, 27.3],
-            [28.3, 28.4, 28.6, 28.7, 28.8]
-        ]
+        self.thresholds = cfg.THRESHOLDS
         self.results = {
             label: {"TP": 0, "FP": 0, "FN": 0, "TN": 0} for label in range(self.label_length)
         }
@@ -150,9 +143,9 @@ class Classification(EvaluatorBase):
         best_thresholds_df = pd.DataFrame(best_thresholds_results)
         best_thresholds_csv_path = osp.join(self.cfg.OUTPUT_DIR, "best_evaluate_ft_clip_metrics.csv")
 
-        average_precision = best_thresholds_df["Precision"].mean()
-        average_f1 = best_thresholds_df["F1"].mean()
-        average_recall = best_thresholds_df["Recall"].mean()
+        average_precision = round(best_thresholds_df["Precision"].mean(), 3)
+        average_f1 = round(best_thresholds_df["F1"].mean(), 3)
+        average_recall = round(best_thresholds_df["Recall"].mean(), 3)
         
         best_thresholds_df["average_precision"] = average_precision
         best_thresholds_df["average_recall"] = average_recall
